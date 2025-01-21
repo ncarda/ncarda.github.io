@@ -13,84 +13,60 @@
 		<h1 style="text-align: center; color:23cb99">Master Shake Pics</h1>
 		<h3 style="text-align: center; color:ffffff">gallery made with nanogallery2</h3>
 
-		<!-- ### position of the gallery ### -->
-		<div id="nanogallery2">gallery_made_with_nanogallery2</div>
-            
-		<script>
-		jQuery(document).ready(function () {
+		<div ID="MasterShake" data-nanogallery2='{
+			"itemsBaseURL": "https://ncarda.github.io/images/",
+			"thumbnailWidth": "auto",
+			"thumbnailHeight": "320",
+			"thumbnailLabel": {"display": false},
+			"galleryDisplayMode": "pagination",
+			"galleryMaxRows": 3,
+			"gallerySorting": "random",
+			"thumbnailAlignment": "fillWidth",
+			"thumbnailL1GutterWidth": 20,
+			"thumbnailL1GutterHeight": 20,
+			"thumbnailBorderHorizontal": 1,
+			"thumbnailBorderVertical": 1,
+			"thumbnailOpenImage": true,
 
-			jQuery("#nanogallery2").nanogallery2( {
+			"thumbnailDisplayTransition": "flipUp",
+			"thumbnailDisplayTransitionDuration": 400,
+			"thumbnailDisplayInterval": 200,
+			"thumbnailDisplayOrder": "rowByRow",
 
-			// GALLERY AND THUMBNAIL LAYOUT
-			thumbnailHeight: '320', thumbnailWidth: 'auto',
-			galleryDisplayMode: 'pagination',                 // gallery pagination mode
-			galleryMaxRows: 3,                                // gallery with max 3 rows
-			gallerySorting: 'random',
-			thumbnailAlignment: 'fillWidth',
-			thumbnailL1GutterWidth: 20,
-			thumbnailL1GutterHeight: 20,
-			thumbnailBorderHorizontal: 1,
-			thumbnailBorderVertical: 1,
+			"touchAnimation": true,
+			"touchAutoOpenDelay": -1
+		}'>
 
-			// THUMBNAIL TOOLS & LABEL
-			thumbnailL1Label: { display: true, position:'overImageOnTop', hideIcons: true, titleFontSize: '1.5em', align: 'left'},
-			thumbnailToolbarImage :  { topLeft: 'select', bottomRight : 'featured,display,download,info,cart' },
-
-			// DISPLAY ANIMATION
-			thumbnailDisplayTransition: 'flipUp',       // thumbnail display animation
-			thumbnailDisplayTransitionDuration: 400,
-			thumbnailDisplayInterval: 200,
-			thumbnailDisplayOrder: 'rowByRow',
-
-			// THUMBNAIL'S HOVER ANIMATION
-			thumbnailHoverEffect2: 'toolsSlideUp|labelSlideDown',
-			touchAnimation: true,
-			touchAutoOpenDelay: -1,
-
-			// GALLERY THEME
-			galleryTheme : {
-				thumbnail: { titleShadow : 'none', descriptionShadow : 'none', titleColor: '#fff', borderColor: '#fff' },
-				navigationPagination :  { background: '#3C4B5B', color: '#fff', colorHover: '#aaa', borderRadius: '4px' },
-			},
-
-			// GALLERY BASE URL
-                        itemsBaseURL:     'https://ncarda.github.io/images/',
-                        
-                        // GALLERY CONTENT 
-                        items: [
-                            { src: '/fulls/01.jpg', srct: '/thumbs/01.jpg' },
-                            { src: '/fulls/02.jpg', srct: '/thumbs/02.jpg' },
-                            { src: '/fulls/03.jpg', srct: '/thumbs/03.jpg' },
-                            { src: '/fulls/04.jpg', srct: '/thumbs/04.jpg' },
-                            { src: '/fulls/05.jpg', srct: '/thumbs/05.jpg' },
-                            { src: '/fulls/06.jpg', srct: '/thumbs/06.jpg' },
-                            { src: '/fulls/07.jpg', srct: '/thumbs/07.jpg' },
-                            { src: '/fulls/08.jpg', srct: '/thumbs/08.jpg' },
-                            { src: '/fulls/09.jpg', srct: '/thumbs/09.jpg' },
-                            { src: '/fulls/10.jpg', srct: '/thumbs/10.jpg' },
-                            { src: '/fulls/11.jpg', srct: '/thumbs/11.jpg' },
-                            { src: '/fulls/12.jpg', srct: '/thumbs/12.jpg' },
-                            { src: '/fulls/13.jpg', srct: '/thumbs/13.jpg' },
-                            { src: '/fulls/14.jpg', srct: '/thumbs/14.jpg' },
-                            { src: '/fulls/15.jpg', srct: '/thumbs/15.jpg' },
-                            { src: '/fulls/16.jpg', srct: '/thumbs/16.jpg' },
-                            { src: '/fulls/17.jpg', srct: '/thumbs/17.jpg' },
-                            { src: '/fulls/18.jpg', srct: '/thumbs/18.jpg' },
-                            { src: '/fulls/19.jpg', srct: '/thumbs/19.jpg' },
-                            { src: '/fulls/20.jpg', srct: '/thumbs/20.jpg' },
-                            { src: '/fulls/21.jpg', srct: '/thumbs/21.jpg' },
-                            { src: '/fulls/22.jpg', srct: '/thumbs/22.jpg' },
-                            { src: '/fulls/23.jpg', srct: '/thumbs/23.jpg' },
-                            { src: '/fulls/24.jpg', srct: '/thumbs/24.jpg' },
-                            { src: '/fulls/25.jpg', srct: '/thumbs/25.jpg' },
-                            { src: '/fulls/26.jpg', srct: '/thumbs/26.jpg' },
-                            { src: '/fulls/27.jpg', srct: '/thumbs/27.jpg' },
-                            { src: '/fulls/28.jpg', srct: '/thumbs/28.jpg' },
-                            { src: '/fulls/29.jpg', srct: '/thumbs/29.jpg' },
-                            { src: '/fulls/30.jpg', srct: '/thumbs/30.jpg' }
-                          ]
-                      });
-                  });
-		</script>
+			<a href="/fulls/01.jpg" data-ngthumb="/thumbs/01.jpg" data-ngdesc="">Shake 1</a>
+			<a href="/fulls/02.jpg" data-ngthumb="/thumbs/02.jpg" data-ngdesc="">Shake 2</a>
+			<a href="/fulls/03.jpg" data-ngthumb="/thumbs/03.jpg" data-ngdesc="">Shake 3</a>
+			<a href="/fulls/04.jpg" data-ngthumb="/thumbs/04.jpg" data-ngdesc="">Shake 4</a>
+			<a href="/fulls/05.jpg" data-ngthumb="/thumbs/05.jpg" data-ngdesc="">Shake 5</a>
+			<a href="/fulls/06.jpg" data-ngthumb="/thumbs/06.jpg" data-ngdesc="">Shake 6</a>
+			<a href="/fulls/07.jpg" data-ngthumb="/thumbs/07.jpg" data-ngdesc="">Shake 7</a>
+			<a href="/fulls/08.jpg" data-ngthumb="/thumbs/08.jpg" data-ngdesc="">Shake 8</a>
+			<a href="/fulls/09.jpg" data-ngthumb="/thumbs/09.jpg" data-ngdesc="">Shake 9</a>
+			<a href="/fulls/10.jpg" data-ngthumb="/thumbs/10.jpg" data-ngdesc="">Shake 10</a>
+			<a href="/fulls/11.jpg" data-ngthumb="/thumbs/11.jpg" data-ngdesc="">Shake 11</a>
+			<a href="/fulls/12.jpg" data-ngthumb="/thumbs/12.jpg" data-ngdesc="">Shake 12</a>
+			<a href="/fulls/13.jpg" data-ngthumb="/thumbs/13.jpg" data-ngdesc="">Shake 13</a>
+			<a href="/fulls/14.jpg" data-ngthumb="/thumbs/14.jpg" data-ngdesc="">Shake 14</a>
+			<a href="/fulls/15.jpg" data-ngthumb="/thumbs/15.jpg" data-ngdesc="">Shake 15</a>
+			<a href="/fulls/16.jpg" data-ngthumb="/thumbs/16.jpg" data-ngdesc="">Shake 16</a>
+			<a href="/fulls/17.jpg" data-ngthumb="/thumbs/17.jpg" data-ngdesc="">Shake 17</a>
+			<a href="/fulls/18.jpg" data-ngthumb="/thumbs/18.jpg" data-ngdesc="">Shake 18</a>
+			<a href="/fulls/19.jpg" data-ngthumb="/thumbs/19.jpg" data-ngdesc="">Shake 19</a>
+			<a href="/fulls/20.jpg" data-ngthumb="/thumbs/20.jpg" data-ngdesc="">Shake 20</a>
+			<a href="/fulls/21.jpg" data-ngthumb="/thumbs/21.jpg" data-ngdesc="">Shake 21</a>
+			<a href="/fulls/22.jpg" data-ngthumb="/thumbs/22.jpg" data-ngdesc="">Shake 22</a>
+			<a href="/fulls/23.jpg" data-ngthumb="/thumbs/23.jpg" data-ngdesc="">Shake 23</a>
+			<a href="/fulls/24.jpg" data-ngthumb="/thumbs/24.jpg" data-ngdesc="">Shake 24</a>
+			<a href="/fulls/25.jpg" data-ngthumb="/thumbs/25.jpg" data-ngdesc="">Shake 25</a>
+			<a href="/fulls/26.jpg" data-ngthumb="/thumbs/26.jpg" data-ngdesc="">Shake 26</a>
+			<a href="/fulls/27.jpg" data-ngthumb="/thumbs/27.jpg" data-ngdesc="">Shake 27</a>
+			<a href="/fulls/28.jpg" data-ngthumb="/thumbs/28.jpg" data-ngdesc="">Shake 28</a>
+			<a href="/fulls/29.jpg" data-ngthumb="/thumbs/29.jpg" data-ngdesc="">Shake 29</a>
+			<a href="/fulls/30.jpg" data-ngthumb="/thumbs/30.jpg" data-ngdesc="">Shake 30</a>
+		</div>
 	</body>
 </html>
