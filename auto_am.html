@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Car Loan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+
+<div class="max-w-xl mx-auto mt-6 p-4 sm:mt-10 sm:p-6 bg-white shadow-xl rounded-xl">
+
+  <h2 class="text-xl sm:text-2xl font-bold mb-3 text-gray-800">
+    Car Loan Calculator with Amortization Schedule
+  </h2>
+
+  <p class="text-gray-600 mb-6 text-sm sm:text-base">
+    Leave exactly one field blank — the app calculates it in real time.
+  </p>
+
+  <!-- Input fields -->
+  <div class="space-y-4">
+
+    <div>
+      <label class="block text-gray-700 font-medium mb-1">Total Due</label>
+      <input id="amount" type="number" step="0.01"
+             class="w-full p-3 border rounded-lg text-base">
+    </div>
+
+    <div>
+      <label class="block text-gray-700 font-medium mb-1">Cash Down</label>
+      <input id="cashDown" type="number" step="0.01"
+             class="w-full p-3 border rounded-lg text-base">
+    </div>
+
+    <div>
+      <label class="block text-gray-700 font-medium mb-1">Trade-In Value</label>
+      <input id="tradeIn" type="number" step="0.01"
+             class="w-full p-3 border rounded-lg text-base">
+    </div>
+
+    <div>
+      <label class="block text-gray-700 font-medium mb-1">Interest Rate (%)</label>
+      <input id="rate" type="number" step="0.0001"
+             class="w-full p-3 border rounded-lg text-base">
+    </div>
+
+    <div>
+      <label class="block text-gray-700 font-medium mb-1">Months</label>
+      <input id="months" type="number"
+             class="w-full p-3 border rounded-lg text-base">
+    </div>
+
+    <div>
+      <label class="block text-gray-700 font-medium mb-1">Monthly Payment</label>
+      <input id="payment" type="number" step="0.01"
+             class="w-full p-3 border rounded-lg text-base">
+    </div>
+
+  </div>
+
+  <!-- Result Box -->
+  <div id="result"
+       class="mt-6 p-4 bg-blue-50 text-blue-800 rounded-lg font-semibold text-sm sm:text-base">
+  </div>
+
+  <!-- Summary Cards -->
+  <div id="summaryCards" class="mt-6 hidden">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+      <div class="p-4 bg-blue-100 text-blue-800 rounded-lg shadow">
+        <div class="text-sm font-medium">Total Interest</div>
+        <div id="totalInterest" class="text-lg font-bold mt-1"></div>
+      </div>
+
+      <div class="p-4 bg-gray-100 text-gray-800 rounded-lg shadow">
+        <div class="text-sm font-medium">Total Cost</div>
+        <div id="totalCost" class="text-lg font-bold mt-1"></div>
+      </div>
+
+      <div class="p-4 bg-green-100 text-green-800 rounded-lg shadow">
+        <div class="text-sm font-medium">Loan Principal</div>
+        <div id="principalDisplay" class="text-lg font-bold mt-1"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Amortization Table -->
+  <div id="amortWrapper" class="mt-6 hidden">
+    <h3 class="text-lg font-bold text-gray-800 mb-2">Amortization Schedule</h3>
+
+    <div class="overflow-x-auto border rounded-lg">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="p-2">Month</th>
+            <th class="p-2">Payment</th>
+            <th class="p-2">Interest</th>
+            <th class="p-2">Principal</th>
+            <th class="p-2">Balance</th>
+          </tr>
+        </thead>
+        <tbody id="amortBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Attach real-time listeners
+document.querySelectorAll("input").forEach(i => i.addEventListener("input", solveLoan));
+
+function solveLoan() {
+  let amount = parseFloat(document.getElementById("amount").value);
+  let cashDown = parseFloat(document.getElementById("cashDown").value);
+  let tradeIn = parseFloat(document.getElementById("tradeIn").value);
+  let rate = parseFloat(document.getElementById("rate").value);
+  let months = parseFloat(document.getElementById("months").value);
+  let payment = parseFloat(document.getElementById("payment").value);
+
+  let fields = {amount, cashDown, tradeIn, rate, months, payment};
+  let empty = Object.entries(fields).filter(x => isNaN(x[1]));
+
+  let resultBox = document.getElementById("result");
+  let amortBody = document.getElementById("amortBody");
+  let amortWrapper = document.getElementById("amortWrapper");
+  let summaryCards = document.getElementById("summaryCards");
+
+  // Reset table + cards
+  amortBody.innerHTML = "";
+  amortWrapper.classList.add("hidden");
+  summaryCards.classList.add("hidden");
+
+  if (empty.length !== 1) {
+    resultBox.innerText = "Leave exactly one field blank.";
+    return;
+  }
+
+  let missing = empty[0][0];
+  let loanAmount = amount - cashDown - tradeIn;
+  let monthlyRate = rate / 100 / 12;
+
+
+function solveRate(payment, loanAmount, months) {
+  let low = 0;
+  let high = 1; // 100% monthly = absurd upper bound but safe
+
+  for (let i = 0; i < 50; i++) {
+    let mid = (low + high) / 2;
+    let calc = (mid * loanAmount) / (1 - Math.pow(1 + mid, -months));
+
+    if (calc > payment) high = mid;
+    else low = mid;
+  }
+  return (low + high) / 2; // monthly rate
+}
+
+
+
+  // Solve fields
+  if (missing === "payment") {
+    let p = (monthlyRate * loanAmount) / (1 - Math.pow(1 + monthlyRate, -months));
+    payment = p;
+    resultBox.innerText = "Monthly Payment = $" + p.toFixed(2);
+  } else if (missing === "amount") {
+    let L = payment * (1 - Math.pow(1 + monthlyRate, -months)) / monthlyRate;
+    amount = L + cashDown + tradeIn;
+    loanAmount = L;
+    resultBox.innerText = "Vehicle Price = $" + amount.toFixed(2);
+  } else if (missing === "cashDown") {
+    let L = payment * (1 - Math.pow(1 + monthlyRate, -months)) / monthlyRate;
+    cashDown = amount - tradeIn - L;
+    resultBox.innerText = "Cash Down = $" + cashDown.toFixed(2);
+  } else if (missing === "tradeIn") {
+    let L = payment * (1 - Math.pow(1 + monthlyRate, -months)) / monthlyRate;
+    tradeIn = amount - cashDown - L;
+    resultBox.innerText = "Trade-In Value = $" + tradeIn.toFixed(2);
+  }   else if (missing === "rate") {
+    let monthly = solveRate(payment, loanAmount, months);
+    let annual = monthly * 12 * 100;
+    monthlyRate = monthly;
+    rate = annual;
+    resultBox.innerText = "Interest Rate ≈ " + annual.toFixed(3) + "%";
+
+  } else if (missing === "months") {
+    let n = -Math.log(1 - loanAmount * monthlyRate / payment) /
+            Math.log(1 + monthlyRate);
+    months = Math.round(n);
+    resultBox.innerText = "Months = " + months;
+  }
+
+  // Generate amortization schedule
+  let balance = loanAmount;
+  let totalInterest = 0;
+
+  for (let m = 1; m <= months; m++) {
+    let interest = balance * monthlyRate;
+    let principalPaid = payment - interest;
+
+    if (balance < principalPaid) {
+      principalPaid = balance;
+      payment = interest + principalPaid;
+    }
+
+    balance -= principalPaid;
+    totalInterest += interest;
+
+    amortBody.innerHTML += `
+      <tr class="border-b">
+        <td class="p-2 text-center">${m}</td>
+        <td class="p-2 text-center">$${payment.toFixed(2)}</td>
+        <td class="p-2 text-center">$${interest.toFixed(2)}</td>
+        <td class="p-2 text-center">$${principalPaid.toFixed(2)}</td>
+        <td class="p-2 text-center">$${balance.toFixed(2)}</td>
+      </tr>`;
+  }
+
+  // Display summary cards
+  document.getElementById("totalInterest").innerText = "$" + totalInterest.toFixed(2);
+  document.getElementById("totalCost").innerText = "$" + (totalInterest + loanAmount).toFixed(2);
+  document.getElementById("principalDisplay").innerText = "$" + loanAmount.toFixed(2);
+
+  summaryCards.classList.remove("hidden");
+  amortWrapper.classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
