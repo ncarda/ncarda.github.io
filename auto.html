@@ -68,19 +68,19 @@
   <div id="summaryCards" class="mt-6 hidden">
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
+      <div class="p-4 bg-green-100 text-green-800 rounded-lg shadow">
+        <div class="text-sm font-medium">Loan Principal</div>
+        <div id="principalDisplay" class="text-lg font-bold mt-1"></div>
+      </div>
+
       <div class="p-4 bg-blue-100 text-blue-800 rounded-lg shadow">
         <div class="text-sm font-medium">Total Interest</div>
         <div id="totalInterest" class="text-lg font-bold mt-1"></div>
       </div>
 
       <div class="p-4 bg-gray-100 text-gray-800 rounded-lg shadow">
-        <div class="text-sm font-medium">Total Cost</div>
+        <div class="text-sm font-medium">Total Financing Cost</div>
         <div id="totalCost" class="text-lg font-bold mt-1"></div>
-      </div>
-
-      <div class="p-4 bg-green-100 text-green-800 rounded-lg shadow">
-        <div class="text-sm font-medium">Loan Principal</div>
-        <div id="principalDisplay" class="text-lg font-bold mt-1"></div>
       </div>
 
     </div>
@@ -213,10 +213,10 @@ loanAmount = amount - cashDown - tradeIn;
     amortBody.innerHTML += `
       <tr class="border-b">
         <td class="p-2 text-center">${m}</td>
-        <td class="p-2 text-center">$${payment.toFixed(2)}</td>
-        <td class="p-2 text-center">$${interest.toFixed(2)}</td>
-        <td class="p-2 text-center">$${principalPaid.toFixed(2)}</td>
-        <td class="p-2 text-center">$${balance.toFixed(2)}</td>
+        <td class="p-2 text-center">${payment.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+        <td class="p-2 text-center">${interest.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+        <td class="p-2 text-center">${principalPaid.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
+        <td class="p-2 text-center">${balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</td>
       </tr>`;
   }
 
