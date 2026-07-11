@@ -320,14 +320,19 @@
         document.getElementById('scheduleCard').style.display = 'block';
     });
 
-    function recalculateSchedule(isBaseline = false) {
+function recalculateSchedule(isBaseline = false) {
         const monthlyRate = (parseFloat(document.getElementById('rate').value) / 100) / 12;
         const startDateStr = document.getElementById('startDate').value;
         
         scheduleData = [];
         let balance = basePrincipal;
-        let currentDate = new Date(startDateStr);
-        currentDate.setMinutes(currentDate.getMinutes() + currentDate.getTimezoneOffset());
+        
+        // Parse the input date and keep its specific day
+        let parts = startDateStr.split('-');
+        let year = parseInt(parts[0]);
+        let month = parseInt(parts[1]) - 1; // JS months are 0-11
+        let day = parseInt(parts[2]);
+        let currentDate = new Date(year, month, day);
         
         let monthNum = 1;
         
@@ -352,7 +357,7 @@
             
             scheduleData.push({
                 month: monthNum,
-                date: new Date(currentDate),
+                date: new Date(currentDate), // This now maintains the original day
                 paymentDue: paymentDue,
                 paymentMade: paymentMade,
                 interest: interest,
@@ -361,10 +366,12 @@
             });
             
             monthNum++;
+            
+            // Move to the same day of the next month
             currentDate.setMonth(currentDate.getMonth() + 1);
             
             if (monthNum > 1200) {
-                if (isBaseline) alert("Loan cannot be paid off with these terms (Payment is less than monthly interest).");
+                if (isBaseline) alert("Loan cannot be paid off with these terms.");
                 break;
             }
         }
@@ -376,7 +383,6 @@
         
         renderTable();
     }
-
     function handlePaymentChange(e, monthNum) {
         let val = e.target.value;
         if (val === '') {
@@ -449,7 +455,7 @@
         csvContent += "Month,Date,Payment Due,Payment Made,Interest,Principal,Balance\n";
         
         scheduleData.forEach(row => {
-            const dateStr = row.date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            const dateStr = row.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             let rowData = [
                 row.month,
                 `"${dateStr}"`,
@@ -479,7 +485,7 @@
 
         scheduleData.forEach((row) => {
             const tr = document.createElement('tr');
-            const dateStr = row.date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            const dateStr = row.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
             tr.innerHTML = `
                 <td>${row.month}</td>
