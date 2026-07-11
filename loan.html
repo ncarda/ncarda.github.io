@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Amortization Calculator</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 2rem;
+            margin: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            margin-bottom: 2rem;
+        }
+        h1, h2 { margin-top: 0; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Summary Dashboard Styles */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-box {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .stat-box.highlight {
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+        }
+        .stat-box.highlight .stat-label {
+            color: #065f46;
+        }
+        .stat-box.highlight .stat-value {
+            color: #047857;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        label { font-weight: 600; font-size: 0.875rem; }
+        input {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        input:focus { outline: 2px solid var(--primary); }
+        .hint { font-size: 0.75rem; color: #64748b; margin-bottom: 1.5rem; display: block; }
+        button.primary-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+        button.primary-btn:hover { background: #1d4ed8; }
+        
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        button.export-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        button.export-btn:hover { background: #059669; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+        }
+        td:first-child, th:first-child { text-align: center; }
+        td:nth-child(2), th:nth-child(2) { text-align: left; }
+        
+        .payment-cell {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+        .payment-input {
+            width: 100px;
+            text-align: right;
+            padding: 0.4rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            background-color: #fffbeb;
+            font-weight: 600;
+        }
+        .payment-input:focus { background-color: #fff; }
+        .copy-btn {
+            background: #e2e8f0;
+            color: #0f172a;
+            border: none;
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .copy-btn:hover { background: #cbd5e1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h1>Loan Amortization Setup</h1>
+        <span class="hint">Fill in the Start Date and exactly 3 of the remaining 4 fields. Leave the field you want to calculate blank.</span>
+        
+        <form id="loanForm">
+            <div class="grid">
+                <div class="input-group">
+                    <label>Start Date (Required)</label>
+                    <input type="date" id="startDate" required>
+                </div>
+                <div class="input-group">
+                    <label>Loan Principal ($)</label>
+                    <input type="number" id="amount" step="0.01" placeholder="e.g. 25000">
+                </div>
+                <div class="input-group">
+                    <label>Interest Rate (% Annual)</label>
+                    <input type="number" id="rate" step="0.001" placeholder="e.g. 5.5">
+                </div>
+                <div class="input-group">
+                    <label>Months (Term)</label>
+                    <input type="number" id="months" step="1" placeholder="e.g. 60">
+                </div>
+                <div class="input-group">
+                    <label>Monthly Payment ($)</label>
+                    <input type="number" id="payment" step="0.01" placeholder="e.g. 477.53">
+                </div>
+            </div>
+            <button type="submit" class="primary-btn">Calculate & Generate Schedule</button>
+        </form>
+    </div>
+
+    <div class="card" id="scheduleCard" style="display: none;">
+        <h2>Schedule & Savings Dashboard</h2>
+        
+        <div class="summary-grid">
+            <div class="stat-box">
+                <div class="stat-label">Loan Principal</div>
+                <div class="stat-value" id="dispPrincipal">$0.00</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Original Total Interest</div>
+                <div class="stat-value" id="dispTotalInterest">$0.00</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Total Financing Cost</div>
+                <div class="stat-value" id="dispTotalCost">$0.00</div>
+            </div>
+            <div class="stat-box highlight">
+                <div class="stat-label">Interest Saved</div>
+                <div class="stat-value" id="dispInterestSaved">$0.00</div>
+            </div>
+            <div class="stat-box highlight">
+                <div class="stat-label">Months Saved</div>
+                <div class="stat-value" id="dispMonthsSaved">0</div>
+            </div>
+        </div>
+
+        <div class="flex-between">
+            <span class="hint" style="margin-bottom: 0;">Edit "Payment Made" to see dynamic savings. Click "Copy Down" to apply a payment amount to all remaining months.</span>
+            <button onclick="exportToCSV()" class="export-btn">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Export CSV
+            </button>
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Date</th>
+                        <th>Payment Due</th>
+                        <th>Payment Made</th>
+                        <th>Interest</th>
+                        <th>Principal</th>
+                        <th>Balance</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody">
+                    <!-- Rows generated via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let scheduleData = [];
+    let basePaymentDue = 0;
+    let basePrincipal = 0;
+    let baseTotalInterest = 0;
+    let baseTotalMonths = 0;
+    let userPayments = {}; 
+
+    const formatCurrency = (num) => {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+    };
+
+    document.getElementById('loanForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const startDateInput = document.getElementById('startDate').value;
+        let amount = parseFloat(document.getElementById('amount').value);
+        let rate = parseFloat(document.getElementById('rate').value);
+        let months = parseFloat(document.getElementById('months').value);
+        let payment = parseFloat(document.getElementById('payment').value);
+
+        const inputs = [amount, rate, months, payment];
+        const emptyCount = inputs.filter(val => isNaN(val)).length;
+
+        if (emptyCount !== 1) {
+            alert("Please leave exactly ONE field blank (excluding Start Date) so it can be calculated.");
+            return;
+        }
+
+        if (isNaN(payment)) {
+            let r = (rate / 100) / 12;
+            payment = amount * (r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
+            document.getElementById('payment').value = payment.toFixed(2);
+        } else if (isNaN(amount)) {
+            let r = (rate / 100) / 12;
+            amount = payment * ((Math.pow(1 + r, months) - 1) / (r * Math.pow(1 + r, months)));
+            document.getElementById('amount').value = amount.toFixed(2);
+        } else if (isNaN(months)) {
+            let r = (rate / 100) / 12;
+            months = -Math.log(1 - (r * amount) / payment) / Math.log(1 + r);
+            months = Math.ceil(months);
+            document.getElementById('months').value = months;
+        } else if (isNaN(rate)) {
+            let low = 0, high = 1, mid;
+            for(let i = 0; i < 100; i++) {
+                mid = (low + high) / 2;
+                let testPmt = amount * (mid * Math.pow(1 + mid, months)) / (Math.pow(1 + mid, months) - 1);
+                if (testPmt > payment) high = mid;
+                else low = mid;
+            }
+            rate = mid * 12 * 100;
+            document.getElementById('rate').value = rate.toFixed(3);
+        }
+
+        basePaymentDue = payment;
+        basePrincipal = amount;
+        userPayments = {}; 
+        
+        recalculateSchedule(true); 
+        document.getElementById('scheduleCard').style.display = 'block';
+    });
+
+    function recalculateSchedule(isBaseline = false) {
+        const monthlyRate = (parseFloat(document.getElementById('rate').value) / 100) / 12;
+        const startDateStr = document.getElementById('startDate').value;
+        
+        scheduleData = [];
+        let balance = basePrincipal;
+        let currentDate = new Date(startDateStr);
+        currentDate.setMinutes(currentDate.getMinutes() + currentDate.getTimezoneOffset());
+        
+        let monthNum = 1;
+        
+        while (balance > 0.005) {
+            let interest = balance * monthlyRate;
+            let payoffAmount = balance + interest;
+            
+            let paymentDue = basePaymentDue;
+            if (payoffAmount < basePaymentDue) {
+                paymentDue = payoffAmount;
+            }
+            
+            let requestedPayment = userPayments[monthNum] !== undefined ? userPayments[monthNum] : basePaymentDue;
+            
+            let paymentMade = requestedPayment;
+            if (paymentMade > payoffAmount) {
+                paymentMade = payoffAmount;
+            }
+            
+            let principal = paymentMade - interest;
+            balance -= principal;
+            
+            scheduleData.push({
+                month: monthNum,
+                date: new Date(currentDate),
+                paymentDue: paymentDue,
+                paymentMade: paymentMade,
+                interest: interest,
+                principal: principal,
+                balance: balance
+            });
+            
+            monthNum++;
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            
+            if (monthNum > 1200) {
+                if (isBaseline) alert("Loan cannot be paid off with these terms (Payment is less than monthly interest).");
+                break;
+            }
+        }
+        
+        if (isBaseline) {
+            baseTotalInterest = scheduleData.reduce((sum, row) => sum + row.interest, 0);
+            baseTotalMonths = scheduleData.length;
+        }
+        
+        renderTable();
+    }
+
+    function handlePaymentChange(e, monthNum) {
+        let val = e.target.value;
+        if (val === '') {
+            delete userPayments[monthNum];
+        } else {
+            let newPayment = parseFloat(val);
+            if (isNaN(newPayment) || newPayment < 0) newPayment = 0;
+            userPayments[monthNum] = newPayment;
+        }
+        recalculateSchedule();
+    }
+
+    function copyPaymentDown(monthNum) {
+        let valToCopy;
+        if (userPayments[monthNum] !== undefined) {
+            valToCopy = userPayments[monthNum];
+        } else {
+            valToCopy = basePaymentDue;
+        }
+        
+        if (valToCopy === basePaymentDue) {
+            for (let m = monthNum + 1; m <= 1200; m++) {
+                delete userPayments[m];
+            }
+        } else {
+            for (let m = monthNum + 1; m <= 1200; m++) {
+                userPayments[m] = valToCopy;
+            }
+        }
+        
+        recalculateSchedule();
+    }
+
+    function updateDashboard() {
+        const currentTotalInterest = scheduleData.reduce((sum, row) => sum + row.interest, 0);
+        const currentMonths = scheduleData.length;
+
+        document.getElementById('dispPrincipal').innerText = formatCurrency(basePrincipal);
+        document.getElementById('dispTotalInterest').innerText = formatCurrency(baseTotalInterest);
+        document.getElementById('dispTotalCost').innerText = formatCurrency(basePrincipal + baseTotalInterest);
+
+        const interestSaved = baseTotalInterest - currentTotalInterest;
+        const monthsSaved = baseTotalMonths - currentMonths;
+
+        document.getElementById('dispInterestSaved').innerText = formatCurrency(interestSaved);
+        document.getElementById('dispMonthsSaved').innerText = monthsSaved;
+        
+        const interestBox = document.getElementById('dispInterestSaved').parentElement;
+        const monthsBox = document.getElementById('dispMonthsSaved').parentElement;
+        
+        [interestBox, monthsBox].forEach(box => {
+            if(interestSaved < 0 || monthsSaved < 0) {
+                box.style.backgroundColor = '#fef2f2';
+                box.style.borderColor = '#fecaca';
+                box.style.color = '#991b1b';
+                box.querySelector('.stat-label').style.color = '#991b1b';
+                box.querySelector('.stat-value').style.color = '#7f1d1d';
+            } else {
+                box.style.backgroundColor = '';
+                box.style.borderColor = '';
+                box.style.color = '';
+                box.querySelector('.stat-label').style.color = '';
+                box.querySelector('.stat-value').style.color = '';
+            }
+        });
+    }
+
+    function exportToCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Month,Date,Payment Due,Payment Made,Interest,Principal,Balance\n";
+        
+        scheduleData.forEach(row => {
+            const dateStr = row.date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            let rowData = [
+                row.month,
+                `"${dateStr}"`,
+                row.paymentDue.toFixed(2),
+                row.paymentMade.toFixed(2),
+                row.interest.toFixed(2),
+                row.principal.toFixed(2),
+                row.balance < 0 ? 0 : row.balance.toFixed(2)
+            ];
+            csvContent += rowData.join(",") + "\n";
+        });
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "amortization_schedule.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function renderTable() {
+        updateDashboard();
+
+        const tbody = document.getElementById('scheduleBody');
+        tbody.innerHTML = '';
+
+        scheduleData.forEach((row) => {
+            const tr = document.createElement('tr');
+            const dateStr = row.date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+            tr.innerHTML = `
+                <td>${row.month}</td>
+                <td>${dateStr}</td>
+                <td>${formatCurrency(row.paymentDue)}</td>
+                <td>
+                    <div class="payment-cell">
+                        <input type="number" 
+                               class="payment-input" 
+                               value="${row.paymentMade.toFixed(2)}" 
+                               step="0.01" 
+                               onchange="handlePaymentChange(event, ${row.month})">
+                        <button class="copy-btn" 
+                                onclick="copyPaymentDown(${row.month})" 
+                                title="Copy this payment down to all remaining months">
+                            Copy Down
+                        </button>
+                    </div>
+                </td>
+                <td>${formatCurrency(row.interest)}</td>
+                <td>${formatCurrency(row.principal)}</td>
+                <td>${formatCurrency(row.balance < 0 ? 0 : row.balance)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+</script>
+
+</body>
+</html>
