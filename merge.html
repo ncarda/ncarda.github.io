@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>My Mergely Editor</title>
+    <!-- Load jQuery, CodeMirror, and Mergely via CDN -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mergely/5.3.6/mergely.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mergely/5.3.6/mergely.min.js"></script>
+</head>
+<body>
+
+    <!-- Container for the editor -->
+    <div id="compare"></div>
+
+    <script>
+        $(document).ready(function () {
+            $('#compare').mergely({
+                lhs: function(setValue) { setValue('Original text here'); },
+                rhs: function(setValue) { setValue('Changed text here'); }
+            });
+        });
+    </script>
+</body>
+</html>
