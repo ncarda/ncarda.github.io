@@ -1,13 +1,76 @@
-<!DOCTYPE HTML>
- 
-<meta charset="UTF-8">
-<meta http-equiv="refresh" content="1; url=https://ncarda.github.io/loan.html">
- 
-<script>
-  window.location.href = "https://ncarda.github.io/loan.html"
-</script>
- 
-<title>Page Redirection</title>
- 
-<!-- Note: don't tell people to `click` the link, just tell them that it is a link. -->
-If you are not redirected automatically, follow the <a href='https://ncarda.github.io/loan.html'>link to example</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Misc Stuff</title>
+    
+<style>
+    /* Reuse your existing variables from loan.html */
+    :root {
+        --primary: #2563eb;
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --text: #0f172a;
+        --border: #e2e8f0;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        padding: 2rem;
+        margin: 0;
+    }
+
+    .container { max-width: 1000px; margin: 0 auto; }
+
+    /* The grid layout matches your loan.html */
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    /* Card styling to match your existing interface */
+    .card {
+        background: var(--surface);
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        border-color: var(--primary);
+    }
+
+    h1 { margin-bottom: 2rem; }
+    h2 { margin-top: 0; color: var(--primary); }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Tool Directory</h1>
+    <div class="grid">
+        <a href="loan.html" class="card" style="text-decoration: none; color: inherit;">
+            <h2>Loan Calculator</h2>
+            <p>Manage and calculate your loan repayments.</p>
+        </a>
+        
+        <a href="auto.html" class="card" style="text-decoration: none; color: inherit;">
+            <h2>Auto Finance</h2>
+            <p>Details and tools for your automotive financing.</p>
+        </a>
+        
+        <a href="merge.html" class="card" style="text-decoration: none; color: inherit;">
+            <h2>Merge Tool</h2>
+            <p>Combine and diff your text seamlessly.</p>
+        </a>
+    </div>
+</div>
+</body>
+</html>
