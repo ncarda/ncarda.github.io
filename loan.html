@@ -433,6 +433,11 @@
         }
         
         recalculateSchedule();
+        for (let m = 1; m <= 1200; m++) {
+            if (m > scheduleData.length) {
+                delete userPayments[m];
+            }
+        }
     }
 
     function updateDashboard() {
