@@ -174,7 +174,18 @@
 
 <div class="container">
     <div class="card">
-        <h1>Loan Amortization Setup</h1>
+        <div class="flex-between" style="margin-bottom: 0;">
+            <h1>Loan Amortization Setup</h1>
+            
+            <!-- Added Import JSON Button -->
+            <div>
+                <button type="button" class="export-btn" style="background: #64748b;" onclick="document.getElementById('importFile').click()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    Import JSON
+                </button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importFromJSON(event)">
+            </div>
+        </div>
         <span class="hint">Fill in the Start Date and exactly 3 of the remaining 4 fields. Leave the field you want to calculate blank.</span>
         
         <form id="loanForm">
@@ -232,10 +243,18 @@
 
         <div class="flex-between">
             <span class="hint" style="margin-bottom: 0;">Edit "Payment Made" to see dynamic savings. Click "Copy Down" to apply a payment amount to all remaining months.</span>
-            <button onclick="exportToCSV()" class="export-btn">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Export CSV
-            </button>
+            
+            <div style="display: flex; gap: 0.5rem;">
+                <!-- Added Export JSON Button -->
+                <button onclick="exportToJSON()" class="export-btn" style="background: #3b82f6;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Export JSON
+                </button>
+                <button onclick="exportToCSV()" class="export-btn">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Export CSV
+                </button>
+            </div>
         </div>
         
         <div style="overflow-x: auto;">
@@ -321,17 +340,16 @@
         document.getElementById('scheduleCard').style.display = 'block';
     });
 
-function recalculateSchedule(isBaseline = false) {
+    function recalculateSchedule(isBaseline = false) {
         const monthlyRate = (parseFloat(document.getElementById('rate').value) / 100) / 12;
         const startDateStr = document.getElementById('startDate').value;
         
         scheduleData = [];
         let balance = basePrincipal;
         
-        // Parse the input date and keep its specific day
         let parts = startDateStr.split('-');
         let year = parseInt(parts[0]);
-        let month = parseInt(parts[1]) - 1; // JS months are 0-11
+        let month = parseInt(parts[1]) - 1; 
         let day = parseInt(parts[2]);
         let currentDate = new Date(year, month, day);
         
@@ -358,7 +376,7 @@ function recalculateSchedule(isBaseline = false) {
             
             scheduleData.push({
                 month: monthNum,
-                date: new Date(currentDate), // This now maintains the original day
+                date: new Date(currentDate), 
                 paymentDue: paymentDue,
                 paymentMade: paymentMade,
                 interest: interest,
@@ -368,7 +386,6 @@ function recalculateSchedule(isBaseline = false) {
             
             monthNum++;
             
-            // Move to the same day of the next month
             currentDate.setMonth(currentDate.getMonth() + 1);
             
             if (monthNum > 1200) {
@@ -384,6 +401,7 @@ function recalculateSchedule(isBaseline = false) {
         
         renderTable();
     }
+
     function handlePaymentChange(e, monthNum) {
         let val = e.target.value;
         if (val === '') {
@@ -476,6 +494,76 @@ function recalculateSchedule(isBaseline = false) {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    }
+
+    // --- Added JSON Export Logic ---
+    function exportToJSON() {
+        const exportData = {
+            setup: {
+                startDate: document.getElementById('startDate').value,
+                amount: document.getElementById('amount').value,
+                rate: document.getElementById('rate').value,
+                months: document.getElementById('months').value,
+                payment: document.getElementById('payment').value
+            },
+            userPayments: userPayments,
+            schedule: scheduleData
+        };
+        
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+        const link = document.createElement("a");
+        link.setAttribute("href", dataStr);
+        link.setAttribute("download", "amortization_data.json");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // --- Added JSON Import Logic ---
+    function importFromJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                
+                // 1. Restore Setup Data
+                if (data.setup) {
+                    document.getElementById('startDate').value = data.setup.startDate || '';
+                    document.getElementById('amount').value = data.setup.amount || '';
+                    document.getElementById('rate').value = data.setup.rate || '';
+                    document.getElementById('months').value = data.setup.months || '';
+                    document.getElementById('payment').value = data.setup.payment || '';
+                }
+
+                // 2. Prepare Base Variables
+                basePaymentDue = parseFloat(document.getElementById('payment').value);
+                basePrincipal = parseFloat(document.getElementById('amount').value);
+                
+                // 3. Clear user payments momentarily to establish the baseline totals
+                userPayments = {};
+                recalculateSchedule(true);
+                
+                // 4. Restore custom user payments and recalculate the active schedule
+                if (data.userPayments) {
+                    userPayments = data.userPayments;
+                }
+                recalculateSchedule(false);
+                
+                // 5. Reveal the dashboard
+                document.getElementById('scheduleCard').style.display = 'block';
+                
+            } catch (err) {
+                alert("Error importing JSON. Please ensure it is a valid format.");
+                console.error(err);
+            }
+            
+            // Clear input so the same file can be imported again later
+            event.target.value = '';
+        };
+        reader.readAsText(file);
     }
 
     function renderTable() {
