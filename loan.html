@@ -511,8 +511,7 @@
                 months: document.getElementById('months').value,
                 payment: document.getElementById('payment').value
             },
-            userPayments: userPayments,
-            schedule: scheduleData
+            userPayments: userPayments
         };
         
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
