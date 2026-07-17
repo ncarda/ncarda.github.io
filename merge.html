@@ -3,14 +3,9 @@
 <head>
     <meta charset="utf-8">
     <title>Mergely Diff Tool</title>
-    
-    <!-- Dependencies -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    
     <!-- Mergely -->
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mergely/5.0.0/mergely.min.js"></script>
-    <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mergely/5.0.0/mergely.css" />
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mergely/5.4.7/mergely.js" integrity="sha512-v+LeSwOlnrtAQgm2FIbYm4mURmI8kkMbrdWxplEIU7cmM5cj95frObziAmouxWnUPSJNs5LYcWjpN9FAc9eFDQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mergely/5.4.7/mergely.css" integrity="sha512-ulc/uBkNtNb3W/mDZj/cBNCQJ/+Npmcv5SucfIWf72OwQS38ijGkRAuVU/Wclqbjrpp8K5xHR8/rhdLtyHNZww==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         /* IMPORTANT: Mergely requires an explicit height to render */
         #compare {
@@ -23,7 +18,7 @@
   <div id="compare"></div>
 
   <script>
-    const doc = new Mergely('#compare');
+    const doc = new Mergely('#compare', {wrap_lines: true});
     doc.once('updated', () => {
       doc.lhs('the quick red fox\njumped over the hairy dog');
       doc.rhs('the quick brown fox\njumped over the lazy dog');
