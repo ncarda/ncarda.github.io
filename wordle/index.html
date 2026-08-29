@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entropy Wordle Solver</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 2rem;
+            margin: 0;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            border-color: var(--primary);
+        }
+
+        h1 { margin-bottom: 0.5rem; }
+        h2 { margin-top: 0; color: var(--primary); font-size: 1.5rem; }
+        
+        .subtitle { color: #64748b; margin-top: 0; margin-bottom: 2rem; }
+
+        /* Form Controls */
+        .input-group { margin-bottom: 1.5rem; }
+        label { font-weight: 500; font-size: 0.9rem; }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 1rem;
+            text-transform: uppercase;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            width: 100%;
+            margin-bottom: 0.75rem;
+        }
+
+        button:hover { background-color: #1d4ed8; }
+        
+        #resetBtn { background-color: #64748b; }
+        #resetBtn:hover { background-color: #475569; }
+
+        .color-legend { font-size: 0.85rem; color: #64748b; margin-top: 0.5rem; }
+
+        /* Results List */
+        #topGuesses {
+            padding: 0;
+            margin: 0;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .clickable-word {
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            list-style-type: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .clickable-word:last-child { border-bottom: none; }
+        
+        .clickable-word:hover {
+            background-color: var(--bg);
+            color: var(--primary);
+        }
+        
+        .entropy-val { font-size: 0.9rem; color: #64748b; }
+        
+        /* Custom Scrollbar for results */
+        #topGuesses::-webkit-scrollbar { width: 8px; }
+        #topGuesses::-webkit-scrollbar-track { background: var(--bg); }
+        #topGuesses::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        #topGuesses::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Wordle Solver</h1>
+        <p class="subtitle">Candidates remaining: <strong id="count" style="color: var(--text)">-</strong></p>
+
+        <div class="grid">
+            <!-- Left Card: Inputs -->
+            <div class="card">
+                <h2>Enter Feedback</h2>
+                
+                <div class="input-group">
+                    <label>Guess Word</label>
+                    <input type="text" id="guessWord" maxlength="5" placeholder="e.g. CRANE">
+                </div>
+                
+                <div class="input-group">
+                    <label>Color Pattern</label>
+                    <input type="text" id="pattern" maxlength="5" placeholder="e.g. 00120">
+                    <div class="color-legend">0 = Gray, 1 = Yellow, 2 = Green</div>
+                </div>
+                
+                <button id="submitFeedbackBtn">Submit Feedback</button>
+                <button id="resetBtn">Reset Game</button>
+            </div>
+
+            <!-- Right Card: Results -->
+            <div class="card">
+                <h2>Top Guesses</h2>
+                <div class="input-group">
+                    <button id="calculateBtn">Calculate Entropy</button>
+                </div>
+                <ul id="topGuesses">
+                    <li class="clickable-word" style="justify-content: center; color: #64748b;">
+                        Load the dictionary first...
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="solver.js"></script>
+</body>
+</html>
