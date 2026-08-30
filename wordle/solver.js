@@ -100,7 +100,7 @@ function getBestGuesses() {
             let e = calculateEntropy(guess, candidates);
             
             // Apply a bonus to possible winners based on the number of possible winners
-            let winBonus = isCand ? (2.5 / Math.log2(candidates.length)) : 0; 
+            let winBonus = isCand ? (1 / Math.log2(candidates.length)) : 0; 
             let score = e + winBonus;
 
             results.push({ 
@@ -160,7 +160,7 @@ function updateStats() {
     if (candidates.length <= 1) {
         bonusDisplay.innerText = "N/A";
     } else {
-        let currentBonus = 2.5 / Math.log2(candidates.length);
+        let currentBonus = 1 / Math.log2(candidates.length);
         bonusDisplay.innerText = currentBonus.toFixed(3);
     }
 }
