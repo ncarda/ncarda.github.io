@@ -6,7 +6,7 @@ let currentLength = 5;
 
 async function loadDictionary() {
     try {
-        const response = await fetch('/wordl/wordl.txt');
+        const response = await fetch('/wordle/wordl.txt');
         if (!response.ok) throw new Error("Dictionary file not found");
         const text = await response.text();
         
