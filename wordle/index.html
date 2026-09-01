@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="icon" href="/wordl/favicon.png" type="image/png">
     <title>Entropy Wordle Solver</title>
     <style>
         :root {
@@ -51,11 +51,10 @@
         
         .subtitle { color: #64748b; margin-top: 0; margin-bottom: 2rem; }
 
-        /* Form Controls */
         .input-group { margin-bottom: 1.5rem; }
         label { font-weight: 500; font-size: 0.9rem; }
         
-        input[type="text"] {
+        input[type="text"], select {
             width: 100%;
             padding: 0.75rem;
             margin-top: 0.5rem;
@@ -64,11 +63,12 @@
             box-sizing: border-box;
             font-family: inherit;
             font-size: 1rem;
-            text-transform: uppercase;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         
-        input[type="text"]:focus {
+        input[type="text"] { text-transform: uppercase; }
+
+        input[type="text"]:focus, select:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
@@ -95,7 +95,6 @@
 
         .color-legend { font-size: 0.85rem; color: #64748b; margin-top: 0.5rem; }
 
-        /* Results List */
         #topGuesses {
             padding: 0;
             margin: 0;
@@ -125,7 +124,6 @@
         
         .entropy-val { font-size: 0.9rem; color: #64748b; }
         
-        /* Custom Scrollbar for results */
         #topGuesses::-webkit-scrollbar { width: 8px; }
         #topGuesses::-webkit-scrollbar-track { background: var(--bg); }
         #topGuesses::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -137,24 +135,39 @@
     <div class="container">
         <h1>Wordle Solver</h1>
         <p class="subtitle">
-    Candidates remaining: <strong id="count" style="color: var(--text)">-</strong> 
-    &nbsp;&nbsp;|&nbsp;&nbsp; 
-    Win Bonus: <strong id="winBonusDisplay" style="color: var(--text)">-</strong>
-</p>
+            Candidates remaining: <strong id="count" style="color: var(--text)">-</strong> 
+            &nbsp;&nbsp;|&nbsp;&nbsp; 
+            Win Bonus: <strong id="winBonusDisplay" style="color: var(--text)">-</strong>
+            &nbsp;&nbsp;|&nbsp;&nbsp; 
+            Play at: <a href="https://hellowordl.net" target="_blank">Hello Wordl</a>
+        </p>
 
         <div class="grid">
-            <!-- Left Card: Inputs -->
             <div class="card">
                 <h2>Enter Feedback</h2>
 
                 <div class="input-group">
+                    <label>Word Length</label>
+                    <select id="wordLength">
+                        <option value="4">4 Letters</option>
+                        <option value="5" selected>5 Letters</option>
+                        <option value="6">6 Letters</option>
+                        <option value="7">7 Letters</option>
+                        <option value="8">8 Letters</option>
+                        <option value="9">9 Letters</option>
+                        <option value="10">10 Letters</option>
+                        <option value="11">11 Letters</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
                     <label>Guess Word</label>
-                    <input type="text" id="guessWord" maxlength="5" placeholder="e.g. SLATE">
+                    <input type="text" id="guessWord">
                 </div>
                 
                 <div class="input-group">
                     <label>Color Pattern</label>
-                    <input type="text" id="pattern" maxlength="5" placeholder="e.g. 00120">
+                    <input type="text" id="pattern">
                     <div class="color-legend">0 = Gray, 1 = Yellow, 2 = Green</div>
                 </div>
                 
@@ -162,7 +175,6 @@
                 <button id="resetBtn">Reset Game</button>
             </div>
 
-            <!-- Right Card: Results -->
             <div class="card">
                 <h2>Top Guesses</h2>
                 <div class="input-group">
@@ -177,6 +189,6 @@
         </div>
     </div>
 
-    <script src="solver.js"></script>
+    <script src="/wordl/solver.js"></script>
 </body>
 </html>
