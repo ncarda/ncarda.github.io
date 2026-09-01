@@ -1,266 +1,341 @@
-let masterDictionary = [];
-let fullCandidates = [];
-let candidates = [];
-let allowedGuesses = [];
-let currentLength = 5;
+const WordleSolver = (() => {
 
-async function loadDictionary() {
-    try {
-        const response = await fetch('/wordle/wordl.txt');
-        if (!response.ok) throw new Error("Dictionary file not found");
-        const text = await response.text();
-        
-        masterDictionary = text.split('\n')
-            .map(w => w.trim().toLowerCase())
-            .filter(w => w.length >= 4 && w.length <= 11);
+    // ==========================
+    // Constants
+    // ==========================
+    const ENTROPY_SKIP_THRESHOLD = 5000;
+    const DISPLAY_LIMIT = 200;
 
-        const wordLengthSelect = document.getElementById('wordLength');
-        const initialLength = wordLengthSelect ? wordLengthSelect.value : 5;
-        setWordLength(initialLength);
-    } catch (error) {
-        console.error("Error loading text file.", error);
-        const tg = document.getElementById('topGuesses');
-        if (tg) tg.innerHTML = "<li style='padding: 1rem; color: red;'>Error loading dictionary. Make sure wordl.txt is in the folder and you are running via a local web server (not file://).</li>";
-    }
-}
+    // ==========================
+    // State
+    // ==========================
+    let masterDictionary = [];
+    let fullCandidates = [];
+    let candidates = [];
+    let allowedGuesses = [];
+    let currentLength = 5;
 
-function setWordLength(len) {
-    currentLength = parseInt(len);
-    
-    let wordsOfLength = masterDictionary.filter(w => w.length === currentLength);
-    
-    fullCandidates = [...wordsOfLength];
-    candidates = [...wordsOfLength];
-    allowedGuesses = [...wordsOfLength];
+    // Precomputed per-length arrays
+    let wordArrays = {};        // word -> array of chars
+    let patternCache = {};      // guess -> target -> pattern
+    let entropyCache = {};      // candidateCount -> guess -> entropy
 
-    const guessInput = document.getElementById('guessWord');
-    const patternInput = document.getElementById('pattern');
-    
-    if (guessInput && patternInput) {
-        guessInput.setAttribute('maxlength', currentLength);
-        patternInput.setAttribute('maxlength', currentLength);
-        guessInput.placeholder = `e.g. ${"A".repeat(currentLength)}`;
-        patternInput.placeholder = `e.g. ${"0".repeat(currentLength - 1)}2`;
-        
-        guessInput.value = '';
-        patternInput.value = '';
-    }
-    
-    updateStats();
-    const tg = document.getElementById('topGuesses');
-    if (tg) tg.innerHTML = `<li style="padding: 1rem; text-align: center; color: #64748b;">Ready. Loaded ${candidates.length} valid words for length ${currentLength}.</li>`;
-}
+    // ==========================
+    // DOM Cache
+    // ==========================
+    const DOM = {
+        tg: document.getElementById("topGuesses"),
+        count: document.getElementById("count"),
+        bonusDisplay: document.getElementById("winBonusDisplay"),
+        wordLength: document.getElementById("wordLength"),
+        guessWord: document.getElementById("guessWord"),
+        pattern: document.getElementById("pattern"),
+        calculateBtn: document.getElementById("calculateBtn"),
+        submitBtn: document.getElementById("submitFeedbackBtn"),
+        resetBtn: document.getElementById("resetBtn")
+    };
 
-function getPattern(guess, target) {
-    let len = guess.length;
-    let pattern = new Array(len).fill(0);
-    let targetChars = target.split('');
-    let guessChars = guess.split('');
+    // ==========================
+    // Helper: Build badge
+    // ==========================
+    const badge = (text, color) =>
+        `<span class="badge-${color}">${text}</span>`;
 
-    for (let i = 0; i < len; i++) {
-        if (guessChars[i] === targetChars[i]) {
-            pattern[i] = 2;
-            targetChars[i] = null;
-            guessChars[i] = null;
-        }
-    }
-
-    for (let i = 0; i < len; i++) {
-        if (guessChars[i] !== null) {
-            let idx = targetChars.indexOf(guessChars[i]);
-            if (idx !== -1) {
-                pattern[i] = 1;
-                targetChars[idx] = null;
-            }
-        }
-    }
-    return pattern.join('');
-}
-
-function calculateEntropy(guess, currentCandidates) {
-    let patternCounts = {};
-    
-    for (let target of currentCandidates) {
-        let p = getPattern(guess, target);
-        patternCounts[p] = (patternCounts[p] || 0) + 1;
-    }
-
-    let entropy = 0;
-    let total = currentCandidates.length;
-
-    for (let p in patternCounts) {
-        let prob = patternCounts[p] / total;
-        entropy -= prob * Math.log2(prob);
-    }
-    return entropy;
-}
-
-function selectWord(word) {
-    const guessInput = document.getElementById('guessWord');
-    const patternInput = document.getElementById('pattern');
-    if (guessInput && patternInput) {
-        guessInput.value = word.toUpperCase();
-        patternInput.focus(); 
-    }
-}
-
-function getBestGuesses() {
-    const tg = document.getElementById('topGuesses');
-    if (!tg) return;
-
-    if (candidates.length === 0) {
-        tg.innerHTML = "<li style='padding:1rem;'>No valid words remain. Check your spelling or feedback pattern.</li>";
-        return;
-    }
-    
-    if (candidates.length === 1) {
-        tg.innerHTML = `<li class="clickable-word" onclick="selectWord('${candidates[0]}')">
-            <div><strong>${candidates[0].toUpperCase()}</strong> <span style="font-size: 0.75rem; background: #2563eb; color: white; padding: 2px 6px; border-radius: 12px; margin-left: 8px;">Winner!</span></div>
-            <div class="entropy-val">Only word left</div>
+    // ==========================
+    // Helper: Build list item
+    // ==========================
+    const listItem = (word, entropy, isCandidate) => `
+        <li class="clickable-word" onclick="WordleSolver.selectWord('${word}')">
+            <div>
+                <strong>${word.toUpperCase()}</strong>
+                ${candidates.length === 1 ? badge("Winner!", "blue") : isCandidate ? badge("Possible Answer", "green") : ""}
+            </div>
+            <div class="entropy-val">${entropy === null ? "N/A" : `${entropy.toFixed(3)} bits`}</div>
         </li>`;
-        return;
-    }
 
-    // Protection against browser crash for large datasets
-    if (candidates.length > 5000) {
-        tg.innerHTML = `<li style='padding: 1rem; text-align: center; color: #64748b;'>More than 5,000 candidates remain. Skipping entropy calculation to prevent freezing. Showing valid words:</li>`;
-        
-        let html = tg.innerHTML;
-        let displayLimit = Math.min(200, candidates.length);
-        
-        for (let i = 0; i < displayLimit; i++) {
-            let word = candidates[i];
-            html += `<li class="clickable-word" onclick="selectWord('${word}')">
-                <div><strong>${word.toUpperCase()}</strong><span style="font-size: 0.7rem; background: #10b981; color: white; padding: 2px 6px; border-radius: 12px; margin-left: 8px;">Possible Answer</span></div>
-                <div class="entropy-val">N/A</div>
-            </li>`;
-        }
-        tg.innerHTML = html;
-        return;
-    }
+    // ==========================
+    // Dictionary Loading
+    // ==========================
+    async function loadDictionary() {
+        try {
+            const response = await fetch("/wordle/wordl.txt");
+            if (!response.ok) throw new Error("Dictionary missing");
 
-    let results = [];
-    tg.innerHTML = "<li style='padding: 1rem; text-align: center; color: #64748b;'>Calculating optimal moves... please wait.</li>";
+            const text = await response.text();
+            masterDictionary = text.split("\n")
+                .map(w => w.trim().toLowerCase())
+                .filter(w => w.length >= 4 && w.length <= 11);
 
-    setTimeout(() => {
-        for (let guess of allowedGuesses) {
-            let isCand = candidates.includes(guess);
-            let e = calculateEntropy(guess, candidates);
-            
-            let winBonus = isCand ? (1 / Math.log2(candidates.length)) : 0; 
-            let score = e + winBonus;
+            const initialLen = DOM.wordLength ? DOM.wordLength.value : 5;
+            preloadWordArrays();
+            setWordLength(initialLen);
 
-            results.push({ 
-                word: guess, 
-                entropy: e,     
-                score: score,   
-                isCandidate: isCand
-            });
-        }
-
-        // Sort by score, forcing possible answers to the top when entropies are similar
-        results.sort((a, b) => {
-            if (Math.abs(b.entropy - a.entropy) < 0.5) {
-                if (a.isCandidate && !b.isCandidate) return -1;
-                if (!a.isCandidate && b.isCandidate) return 1;
+        } catch (e) {
+            console.error("Error loading dictionary", e);
+            if (DOM.tg) {
+                DOM.tg.innerHTML = `<li class="error-message">Error loading dictionary.</li>`;
             }
-            return b.score - a.score;
-        });
-        
-        let html = '';
-        let displayLimit = Math.min(200, results.length);
-        
-        for (let i = 0; i < displayLimit; i++) {
-            let item = results[i];
-            let badge = item.isCandidate ? '<span style="font-size: 0.7rem; background: #10b981; color: white; padding: 2px 6px; border-radius: 12px; margin-left: 8px;">Possible Answer</span>' : '';
-            
-            html += `<li class="clickable-word" onclick="selectWord('${item.word}')">
-                <div><strong>${item.word.toUpperCase()}</strong>${badge}</div>
-                <div class="entropy-val">${item.entropy.toFixed(3)} bits</div>
-            </li>`;
-        }
-        tg.innerHTML = html;
-    }, 50); 
-}
-
-function applyFeedback() {
-    const guessInput = document.getElementById('guessWord');
-    const patternInput = document.getElementById('pattern');
-    if (!guessInput || !patternInput) return;
-
-    let guess = guessInput.value.toLowerCase();
-    let pattern = patternInput.value;
-
-    if (guess.length !== currentLength || pattern.length !== currentLength) {
-        alert(`Please enter a ${currentLength}-letter word and a ${currentLength}-digit pattern.`);
-        return;
-    }
-
-    candidates = candidates.filter(target => getPattern(guess, target) === pattern);
-    
-    updateStats();
-    guessInput.value = '';
-    patternInput.value = '';
-    
-    getBestGuesses();
-}
-
-function updateStats() {
-    const countEl = document.getElementById('count');
-    const bonusDisplay = document.getElementById('winBonusDisplay');
-    
-    if (countEl) countEl.innerText = candidates.length;
-    
-    if (bonusDisplay) {
-        if (candidates.length <= 1) {
-            bonusDisplay.innerText = "N/A";
-        } else {
-            let currentBonus = 1 / Math.log2(candidates.length);
-            bonusDisplay.innerText = currentBonus.toFixed(3);
         }
     }
-}
 
-// Event Listeners with Null Checks
-const wordLengthSelect = document.getElementById('wordLength');
-if (wordLengthSelect) {
-    wordLengthSelect.addEventListener('change', (e) => setWordLength(e.target.value));
-}
+    // ==========================
+    // Precompute char arrays
+    // ==========================
+    function preloadWordArrays() {
+        wordArrays = {};
+        for (const word of masterDictionary) {
+            wordArrays[word] = [...word];
+        }
+    }
 
-const calcBtn = document.getElementById('calculateBtn');
-if (calcBtn) calcBtn.addEventListener('click', getBestGuesses);
+    // ==========================
+    // Reset caches when word length changes
+    // ==========================
+    function clearCaches() {
+        patternCache = {};
+        entropyCache = {};
+    }
 
-const submitBtn = document.getElementById('submitFeedbackBtn');
-if (submitBtn) submitBtn.addEventListener('click', applyFeedback);
+    // ==========================
+    // Word Length Handling
+    // ==========================
+    function setWordLength(len) {
+        currentLength = Number(len);
+        clearCaches();
 
-const resetBtn = document.getElementById('resetBtn');
-if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
+        const list = masterDictionary.filter(w => w.length === currentLength);
+        fullCandidates = [...list];
+        candidates = [...list];
+        allowedGuesses = [...list];
+
+        if (DOM.guessWord && DOM.pattern) {
+            DOM.guessWord.maxLength = currentLength;
+            DOM.pattern.maxLength = currentLength;
+
+            DOM.guessWord.placeholder = `e.g. ${"A".repeat(currentLength)}`;
+            DOM.pattern.placeholder = `e.g. ${"0".repeat(currentLength - 1)}2`;
+
+            DOM.guessWord.value = "";
+            DOM.pattern.value = "";
+        }
+
+        updateStats();
+
+        if (DOM.tg) {
+            DOM.tg.innerHTML =
+                `<li class="center-note">Ready. ${candidates.length} words loaded.</li>`;
+        }
+    }
+
+    // ==========================
+    // High-performance pattern generator
+    // ==========================
+    function getPattern(guess, target) {
+        if (!patternCache[guess]) patternCache[guess] = {};
+        if (patternCache[guess][target]) return patternCache[guess][target];
+
+        const gArr = wordArrays[guess];
+        const tArr = wordArrays[target];
+
+        const len = currentLength;
+        const result = new Array(len).fill(0);
+
+        // Frequency map for yellow-phase
+        const freq = {};
+        for (let i = 0; i < len; i++) {
+            const c = tArr[i];
+            freq[c] = (freq[c] || 0) + 1;
+        }
+
+        // Green pass
+        for (let i = 0; i < len; i++) {
+            if (gArr[i] === tArr[i]) {
+                result[i] = 2;
+                freq[gArr[i]]--;
+            }
+        }
+
+        // Yellow pass
+        for (let i = 0; i < len; i++) {
+            if (result[i] === 0) {
+                const c = gArr[i];
+                if (freq[c] > 0) {
+                    result[i] = 1;
+                    freq[c]--;
+                }
+            }
+        }
+
+        const pattern = result.join("");
+        patternCache[guess][target] = pattern;
+        return pattern;
+    }
+
+    // ==========================
+    // Optimized entropy function with caching
+    // ==========================
+    function calculateEntropy(guess, candidateList) {
+        const countKey = candidateList.length;
+
+        if (!entropyCache[countKey]) entropyCache[countKey] = {};
+        if (entropyCache[countKey][guess]) return entropyCache[countKey][guess];
+
+        const patternCounts = Object.create(null);
+
+        let sum = 0;
+        const total = candidateList.length;
+
+        for (const target of candidateList) {
+            const p = getPattern(guess, target);
+            patternCounts[p] = (patternCounts[p] || 0) + 1;
+        }
+
+        for (const p in patternCounts) {
+            const prob = patternCounts[p] / total;
+            sum -= prob * Math.log2(prob);
+        }
+
+        entropyCache[countKey][guess] = sum;
+        return sum;
+    }
+
+    // ==========================
+    // Select Word
+    // ==========================
+    function selectWord(word) {
+        if (DOM.guessWord && DOM.pattern) {
+            DOM.guessWord.value = word.toUpperCase();
+            DOM.pattern.focus();
+        }
+    }
+
+    // ==========================
+    // Main Entropy Ranking
+    // ==========================
+    function getBestGuesses() {
+        if (!DOM.tg) return;
+
+        if (candidates.length === 0) {
+            DOM.tg.innerHTML =
+                `<li class="center-note">No valid words remain.</li>`;
+            return;
+        }
+
+        if (candidates.length === 1) {
+            DOM.tg.innerHTML = listItem(candidates[0], null, true)
+                .replace("N/A", "Only word left");
+            return;
+        }
+
+        if (candidates.length > ENTROPY_SKIP_THRESHOLD) {
+            DOM.tg.innerHTML =
+                `<li class="center-note">Too many candidates. Showing first ${DISPLAY_LIMIT} words.</li>`;
+            DOM.tg.innerHTML += candidates
+                .slice(0, DISPLAY_LIMIT)
+                .map(w => listItem(w, null, true))
+                .join("");
+            return;
+        }
+
+        DOM.tg.innerHTML =
+            `<li class="center-note">Computing optimal guesses...</li>`;
+
+        setTimeout(() => {
+            const candidateSet = new Set(candidates);
+            const results = [];
+
+            for (const guess of allowedGuesses) {
+                const entropy = calculateEntropy(guess, candidates);
+                const isCandidate = candidateSet.has(guess);
+                const winBonus = isCandidate ? (1 / Math.log2(candidates.length)) : 0;
+
+                results.push({
+                    word: guess,
+                    entropy,
+                    isCandidate,
+                    score: entropy + winBonus
+                });
+            }
+
+            results.sort((a, b) => b.score - a.score);
+
+            DOM.tg.innerHTML = results
+                .slice(0, DISPLAY_LIMIT)
+                .map(r => listItem(r.word, r.entropy, r.isCandidate))
+                .join("");
+        }, 30);
+    }
+
+    // ==========================
+    // Apply Feedback
+    // ==========================
+    function applyFeedback() {
+        if (!DOM.guessWord || !DOM.pattern) return;
+
+        const guess = DOM.guessWord.value.toLowerCase();
+        const pattern = DOM.pattern.value;
+
+        if (guess.length !== currentLength || pattern.length !== currentLength) {
+            alert(`Please enter a ${currentLength}-letter guess and pattern.`);
+            return;
+        }
+
+        candidates = candidates.filter(
+            target => getPattern(guess, target) === pattern
+        );
+
+        updateStats();
+        DOM.guessWord.value = "";
+        DOM.pattern.value = "";
+        getBestGuesses();
+    }
+
+    // ==========================
+    // Stats Update
+    // ==========================
+    function updateStats() {
+        if (DOM.count) DOM.count.innerText = candidates.length;
+
+        if (DOM.bonusDisplay) {
+            DOM.bonusDisplay.innerText =
+                candidates.length <= 1
+                    ? "N/A"
+                    : (1 / Math.log2(candidates.length)).toFixed(3);
+        }
+    }
+
+    // ==========================
+    // Event Listeners
+    // ==========================
+    DOM.wordLength?.addEventListener("change", e => setWordLength(e.target.value));
+    DOM.calculateBtn?.addEventListener("click", getBestGuesses);
+    DOM.submitBtn?.addEventListener("click", applyFeedback);
+
+    DOM.resetBtn?.addEventListener("click", () => {
         candidates = [...fullCandidates];
         updateStats();
-        const guessInput = document.getElementById('guessWord');
-        const patternInput = document.getElementById('pattern');
-        if (guessInput) guessInput.value = '';
-        if (patternInput) patternInput.value = '';
-        
-        const tg = document.getElementById('topGuesses');
-        if (tg) tg.innerHTML = "<li style='padding:1rem; text-align:center;'>Reset complete.</li>";
-    });
-}
 
-const guessInputEl = document.getElementById('guessWord');
-if (guessInputEl) {
-    guessInputEl.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') applyFeedback();
-    });
-}
+        if (DOM.guessWord) DOM.guessWord.value = "";
+        if (DOM.pattern) DOM.pattern.value = "";
 
-const patternInputEl = document.getElementById('pattern');
-if (patternInputEl) {
-    patternInputEl.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') applyFeedback();
+        if (DOM.tg)
+            DOM.tg.innerHTML = `<li class="center-note">Reset complete.</li>`;
     });
-}
 
-// Initialize
-loadDictionary();
+    // Enter key shortcuts
+    DOM.guessWord?.addEventListener("keydown", e => {
+        if (e.key === "Enter") applyFeedback();
+    });
+
+    DOM.pattern?.addEventListener("keydown", e => {
+        if (e.key === "Enter") applyFeedback();
+    });
+
+    // ==========================
+    // Initialize
+    // ==========================
+    loadDictionary();
+
+    return { selectWord };
+
+})();

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/wordle/favicon.png" type="image/png">
     <title>Entropy Wordle Solver</title>
+
     <style>
         :root {
             --primary: #2563eb;
@@ -95,6 +96,34 @@
 
         .color-legend { font-size: 0.85rem; color: #64748b; margin-top: 0.5rem; }
 
+        /* Rewired solver new classes */
+        .center-note { text-align: center; padding: 1rem; color: #64748b; }
+        .error-message { padding: 1rem; color: red; font-weight: bold; }
+
+        .badge-green {
+            background: #10b981;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .badge-red {
+            background: #ef4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .badge-blue {
+            background: #2563eb;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
         #topGuesses {
             padding: 0;
             margin: 0;
@@ -130,24 +159,28 @@
         #topGuesses::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
+
 <body>
 
     <div class="container">
         <h1>Wordle Solver</h1>
+
         <p class="subtitle">
-            Candidates remaining: <strong id="count" style="color: var(--text)">-</strong> 
-            &nbsp;&nbsp;|&nbsp;&nbsp; 
-            Win Bonus: <strong id="winBonusDisplay" style="color: var(--text)">-</strong>
-            &nbsp;&nbsp;|&nbsp;&nbsp; 
+            Candidates remaining: <strong id="count">-</strong>
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            Win Bonus: <strong id="winBonusDisplay">-</strong>
+            &nbsp;&nbsp;|&nbsp;&nbsp;
             Play at: <a href="https://hellowordl.net" target="_blank">Hello Wordl</a>
-        </p>
+	</p>
 
         <div class="grid">
+
+            <!-- Left Card -->
             <div class="card">
                 <h2>Enter Feedback</h2>
 
                 <div class="input-group">
-                    <label>Word Length</label>
+                    <label for="wordLength">Word Length</label>
                     <select id="wordLength">
                         <option value="4">4 Letters</option>
                         <option value="5" selected>5 Letters</option>
@@ -161,12 +194,12 @@
                 </div>
 
                 <div class="input-group">
-                    <label>Guess Word</label>
+                    <label for="guessWord">Guess Word</label>
                     <input type="text" id="guessWord">
                 </div>
                 
                 <div class="input-group">
-                    <label>Color Pattern</label>
+                    <label for="pattern">Color Pattern</label>
                     <input type="text" id="pattern">
                     <div class="color-legend">0 = Gray, 1 = Yellow, 2 = Green</div>
                 </div>
@@ -175,17 +208,19 @@
                 <button id="resetBtn">Reset Game</button>
             </div>
 
+            <!-- Right Card -->
             <div class="card">
                 <h2>Top Guesses</h2>
+
                 <div class="input-group">
                     <button id="calculateBtn">Calculate Entropy</button>
                 </div>
+
                 <ul id="topGuesses">
-                    <li class="clickable-word" style="justify-content: center; color: #64748b;">
-                        Load the dictionary first...
-                    </li>
+                    <li class="center-note">Load the dictionary first...</li>
                 </ul>
             </div>
+
         </div>
     </div>
 
