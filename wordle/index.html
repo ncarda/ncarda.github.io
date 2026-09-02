@@ -53,6 +53,17 @@
         .subtitle { color: #64748b; margin-top: 0; margin-bottom: 2rem; }
 
         .input-group { margin-bottom: 1.5rem; }
+        
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .toggle-group input[type="checkbox"] { width: auto; margin: 0; cursor: pointer; }
+        .toggle-group label { cursor: pointer; user-select: none; }
+
         label { font-weight: 500; font-size: 0.9rem; }
         
         input[type="text"], select {
@@ -96,7 +107,6 @@
 
         .color-legend { font-size: 0.85rem; color: #64748b; margin-top: 0.5rem; }
 
-        /* Rewired solver new classes */
         .center-note { text-align: center; padding: 1rem; color: #64748b; }
         .error-message { padding: 1rem; color: red; font-weight: bold; }
 
@@ -213,6 +223,11 @@
             <!-- Right Card -->
             <div class="card">
                 <h2>Top Guesses</h2>
+
+                <div class="toggle-group">
+                    <input type="checkbox" id="hardModeToggle">
+                    <label for="hardModeToggle">Hard Mode (Valid answers only)</label>
+                </div>
 
                 <div class="input-group">
                     <button id="calculateBtn">Calculate Entropy</button>

@@ -33,7 +33,8 @@ const WordleSolver = (() => {
         pattern: document.getElementById("pattern"),
         calculateBtn: document.getElementById("calculateBtn"),
         submitBtn: document.getElementById("submitFeedbackBtn"),
-        resetBtn: document.getElementById("resetBtn")
+        resetBtn: document.getElementById("resetBtn"),
+        hardModeToggle: document.getElementById("hardModeToggle")
     };
 
     // ==========================
@@ -234,27 +235,31 @@ const WordleSolver = (() => {
         setTimeout(() => {
             const candidateSet = new Set(candidates);
             const results = [];
+            
+            // Switch evaluation pool based on Hard Mode toggle
+            const guessPool = (DOM.hardModeToggle && DOM.hardModeToggle.checked) 
+                ? candidates 
+                : allowedGuesses;
 
-    // If there are more than ENTROPY_SKIP_THRESHOLD/candidates.length items, pick a random starting point.
-    // We subtract ENTROPY_SKIP_THRESHOLD/candidates.length so the loop never runs past the end of the array.
-        const len = allowedGuesses.length;
-        const maxItems = ENTROPY_SKIP_THRESHOLD / candidates.length;
-        const startIndex = len > maxItems ? Math.floor(Math.random() * (len - maxItems + 1)) : 0;
-        const endIndex = Math.min(len, startIndex + maxItems);
+            const len = guessPool.length;
+            const maxItems = Math.floor(ENTROPY_SKIP_THRESHOLD / candidates.length);
+            const startIndex = len > maxItems ? Math.floor(Math.random() * (len - maxItems + 1)) : 0;
+            const endIndex = Math.min(len, startIndex + maxItems);
 
-        for (let i = startIndex; i < endIndex; i++) {
-            const guess = allowedGuesses[i];
-            const entropy = calculateEntropy(guess, candidates);
-            const isCandidate = candidateSet.has(guess);
-            const winBonus = isCandidate ? (1 / Math.log2(candidates.length)) : 0;
+            for (let i = startIndex; i < endIndex; i++) {
+                const guess = guessPool[i];
+                const entropy = calculateEntropy(guess, candidates);
+                const isCandidate = candidateSet.has(guess);
+                const winBonus = isCandidate ? (1 / Math.log2(candidates.length)) : 0;
 
-            results.push({
-            word: guess,
-            entropy,
-            isCandidate,
-            score: entropy + winBonus
-        });
-}
+                results.push({
+                    word: guess,
+                    entropy,
+                    isCandidate,
+                    score: entropy + winBonus
+                });
+            }
+            
             results.sort((a, b) => b.score - a.score);
 
             DOM.tg.innerHTML = results
@@ -275,6 +280,12 @@ const WordleSolver = (() => {
 
         if (guess.length !== currentLength || pattern.length !== currentLength) {
             alert(`Please enter a ${currentLength}-letter guess and pattern.`);
+            return;
+        }
+        
+        // Optional hard mode enforcement for manual input
+        if (DOM.hardModeToggle && DOM.hardModeToggle.checked && !candidates.includes(guess)) {
+            alert("Hard Mode is enabled. You can only guess words that are possible remaining answers.");
             return;
         }
 
