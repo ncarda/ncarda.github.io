@@ -3,7 +3,7 @@ const WordleSolver = (() => {
     // ==========================
     // Constants
     // ==========================
-    const ENTROPY_SKIP_THRESHOLD = 5000;
+    const ENTROPY_SKIP_THRESHOLD = 2500000;
     const DISPLAY_LIMIT = 200;
 
     // ==========================
@@ -26,6 +26,7 @@ const WordleSolver = (() => {
     const DOM = {
         tg: document.getElementById("topGuesses"),
         count: document.getElementById("count"),
+        maxEvalCount: document.getElementById("maxEvalCount"),
         bonusDisplay: document.getElementById("winBonusDisplay"),
         wordLength: document.getElementById("wordLength"),
         guessWord: document.getElementById("guessWord"),
@@ -227,16 +228,6 @@ const WordleSolver = (() => {
             return;
         }
 
-        if (candidates.length > ENTROPY_SKIP_THRESHOLD) {
-            DOM.tg.innerHTML =
-                `<li class="center-note">Too many candidates. Showing first ${DISPLAY_LIMIT} words.</li>`;
-            DOM.tg.innerHTML += candidates
-                .slice(0, DISPLAY_LIMIT)
-                .map(w => listItem(w, null, true))
-                .join("");
-            return;
-        }
-
         DOM.tg.innerHTML =
             `<li class="center-note">Computing optimal guesses...</li>`;
 
@@ -244,19 +235,26 @@ const WordleSolver = (() => {
             const candidateSet = new Set(candidates);
             const results = [];
 
-            for (const guess of allowedGuesses) {
-                const entropy = calculateEntropy(guess, candidates);
-                const isCandidate = candidateSet.has(guess);
-                const winBonus = isCandidate ? (1 / Math.log2(candidates.length)) : 0;
+    // If there are more than ENTROPY_SKIP_THRESHOLD/candidates.length items, pick a random starting point.
+    // We subtract ENTROPY_SKIP_THRESHOLD/candidates.length so the loop never runs past the end of the array.
+        const len = allowedGuesses.length;
+        const maxItems = ENTROPY_SKIP_THRESHOLD / candidates.length;
+        const startIndex = len > maxItems ? Math.floor(Math.random() * (len - maxItems + 1)) : 0;
+        const endIndex = Math.min(len, startIndex + maxItems);
 
-                results.push({
-                    word: guess,
-                    entropy,
-                    isCandidate,
-                    score: entropy + winBonus
-                });
-            }
+        for (let i = startIndex; i < endIndex; i++) {
+            const guess = allowedGuesses[i];
+            const entropy = calculateEntropy(guess, candidates);
+            const isCandidate = candidateSet.has(guess);
+            const winBonus = isCandidate ? (1 / Math.log2(candidates.length)) : 0;
 
+            results.push({
+            word: guess,
+            entropy,
+            isCandidate,
+            score: entropy + winBonus
+        });
+}
             results.sort((a, b) => b.score - a.score);
 
             DOM.tg.innerHTML = results
@@ -295,6 +293,7 @@ const WordleSolver = (() => {
     // ==========================
     function updateStats() {
         if (DOM.count) DOM.count.innerText = candidates.length;
+        if (DOM.maxEvalCount) DOM.maxEvalCount.innerText = Math.ceil(ENTROPY_SKIP_THRESHOLD / candidates.length);
 
         if (DOM.bonusDisplay) {
             DOM.bonusDisplay.innerText =
