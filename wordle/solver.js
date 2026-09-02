@@ -3,8 +3,8 @@ const WordleSolver = (() => {
     // ==========================
     // Constants
     // ==========================
-    const ENTROPY_SKIP_THRESHOLD = 2500000;
-    const DISPLAY_LIMIT = 200;
+    const ENTROPY_SKIP_THRESHOLD = 5000000;
+    const DISPLAY_LIMIT = 250;
 
     // ==========================
     // State
@@ -12,6 +12,7 @@ const WordleSolver = (() => {
     let masterDictionary = [];
     let fullCandidates = [];
     let candidates = [];
+    let guessPool = [];
     let allowedGuesses = [];
     let currentLength = 5;
 
@@ -242,15 +243,15 @@ const WordleSolver = (() => {
                 : allowedGuesses;
 
             const len = guessPool.length;
-            const maxItems = Math.floor(ENTROPY_SKIP_THRESHOLD / candidates.length);
+            const maxItems = Math.floor(ENTROPY_SKIP_THRESHOLD / guessPool.length);
             const startIndex = len > maxItems ? Math.floor(Math.random() * (len - maxItems + 1)) : 0;
             const endIndex = Math.min(len, startIndex + maxItems);
 
             for (let i = startIndex; i < endIndex; i++) {
                 const guess = guessPool[i];
-                const entropy = calculateEntropy(guess, candidates);
+                const entropy = calculateEntropy(guess, guessPool);
                 const isCandidate = candidateSet.has(guess);
-                const winBonus = isCandidate ? (1 / Math.log2(candidates.length)) : 0;
+                const winBonus = isCandidate ? (1 / Math.log2(len)) : 0;
 
                 results.push({
                     word: guess,
@@ -304,7 +305,7 @@ const WordleSolver = (() => {
     // ==========================
     function updateStats() {
         if (DOM.count) DOM.count.innerText = candidates.length;
-        if (DOM.maxEvalCount) DOM.maxEvalCount.innerText = Math.ceil(ENTROPY_SKIP_THRESHOLD / candidates.length);
+        if (DOM.maxEvalCount) DOM.maxEvalCount.innerText = Math.ceil(ENTROPY_SKIP_THRESHOLD / guessPool.length);
 
         if (DOM.bonusDisplay) {
             DOM.bonusDisplay.innerText =
